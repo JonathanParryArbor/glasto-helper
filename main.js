@@ -48,13 +48,13 @@ Other:
 */
 
 class Puppets {
-    constructor(url, rateLimitPerMinute, registrationPageInnerText) {
+    constructor(url, rateLimitPerMinute, holdingPageInnerText) {
         this.tabs = [];
         this.url = url;
         this.refreshRateInMs = (60 / rateLimitPerMinute) * 1000;
-        this.registrationPageInnerText = registrationPageInnerText;
+        this.holdingPageInnerText = holdingPageInnerText;
         this.paused = false;
-        this.similarityThreshold = 80;
+        this.similarityThreshold = 70;
         this.lastHighScorer = -1;
     }
 
@@ -146,7 +146,7 @@ class Puppets {
                             });
 
                             await this.tabs[i].getInnerHtmlTextOfAllElements().then(async pageInnerHtmlText => {
-                                const similarityScore = await this.calculateSimilarity(pageInnerHtmlText, this.registrationPageInnerText);
+                                const similarityScore = await this.calculateSimilarity(pageInnerHtmlText, this.holdingPageInnerText);
                                 await this.tabs[i].setSimilarityScore(similarityScore);
                                 logger.info({
                                     tab: i,
@@ -154,11 +154,11 @@ class Puppets {
                                 });
 
                                 //Hard coded this pause as results from the coach tickets run showed the page we want has a similarity score of 91
-                                if (similarityScore > this.similarityThreshold) {
+                                if (similarityScore < this.similarityThreshold) {
                                     this.paused = true;
                                     logger.info({
                                         tab: i,
-                                        message: `Paused operation as page with > ${this.similarityThreshold}% found`
+                                        message: `Paused operation as page with < ${this.similarityThreshold}% found`
                                     });
                                 }
                                 const highestScoringTab = await this.getHighestScoringTabIndex();
@@ -289,13 +289,13 @@ async function readFileAsString(filePath) {
     return await readFile(filePath);
 }
 
-async function getRegistrationPageInnerText() {
+async function getholdingPageInnerText() {
     if (argv['test'] && argv['test'] !== 'false') {
         return await readFileAsString("resources/test.txt").then(data => {
             return data.toString();
         });
     } else {
-        return await readFileAsString("resources/live.txt").then(data => {
+        return await readFileAsString("resources/holding.txt").then(data => {
             return data.toString();
         });
     }
@@ -303,9 +303,9 @@ async function getRegistrationPageInnerText() {
 
 async function run() {
     parseArgs();
-    const registrationPageInnerText = await getRegistrationPageInnerText();
+    const holdingPageInnerText = await getholdingPageInnerText();
 
-    const tabs = new Puppets(argv['site'], argv['rate-limit'], registrationPageInnerText);
+    const tabs = new Puppets(argv['site'], argv['rate-limit'], holdingPageInnerText);
 
     // Pause/resume by pressing enter
     readline.emitKeypressEvents(process.stdin);

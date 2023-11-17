@@ -1,0 +1,5 @@
+You will be held at this page until there is a free space on the booking site
+
+This page will auto refresh and attempt to access the page in  seconds
+
+Please have your registration number(s), registered postcode(s) and payment details ready to proceed
